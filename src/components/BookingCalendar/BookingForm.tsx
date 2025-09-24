@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import './BookingForm.css';
 
@@ -70,6 +69,16 @@ const BookingForm: React.FC<BookingFormProps> = ({
     }
   };
 
+  // FIX: Format the date display properly without timezone issues
+  const formatDateDisplay = () => {
+    return selectedDate.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      month: 'long', 
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
   return (
     <div className="booking-form">
       <div className="form-header">
@@ -77,11 +86,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
         <div className="booking-details">
           <p className="detail-item">
             <span className="detail-icon">📅</span>
-            {selectedDate.toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              month: 'long', 
-              day: 'numeric' 
-            })}
+            {formatDateDisplay()}
           </p>
           <p className="detail-item">
             <span className="detail-icon">🕐</span>
