@@ -1,11 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import './BookingCalendar.css';
 import CalendarView from './CalendarView';
 import TimeSlotPicker from './TimeSlotPicker';
 import BookingForm from './BookingForm';
 import BookingConfirmation from './BookingConfirmation';
-import { API_ENDPOINTS } from '../../config/constants';
 
 export interface Booking {
   id: string;
@@ -16,132 +14,129 @@ export interface Booking {
   phone: string;
   service: string;
   notes?: string;
-  status: 'pending' | 'confirmed' | 'cancelled';
-  createdAt: string;
+  status: 'confirmed' | 'pending' | 'cancelled';
 }
 
 const BookingCalendar: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>('');
+  const [currentStep, setCurrentStep] = useState<'date' | 'time' | 'form' | 'confirmation'>('date');
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [showForm, setShowForm] = useState(false);
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [currentBooking, setCurrentBooking] = useState<Booking | null>(null);
+  const [confirmedBooking, setConfirmedBooking] = useState<Booking | null>(null);
 
+  // Load bookings from localStorage on component mount
   useEffect(() => {
-    loadBookings();
+    const savedBookings = localStorage.getItem('bookings');
+    if (savedBookings) {
+      setBookings(JSON.parse(savedBookings));
+    }
   }, []);
-
-  const loadBookings = async () => {
-    try {
-      const stored = await window.persistentStorage.getItem('bookings');
-      if (stored) {
-        setBookings(JSON.parse(stored));
-      }
-    } catch (error) {
-      console.error('Error loading bookings:', error);
-    }
-  };
-
-  const saveBookings = async (updatedBookings: Booking[]) => {
-    try {
-      await window.persistentStorage.setItem('bookings', JSON.stringify(updatedBookings));
-      setBookings(updatedBookings);
-    } catch (error) {
-      console.error('Error saving bookings:', error);
-    }
-  };
 
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
     setSelectedTime('');
-    setShowForm(false);
+    setCurrentStep('time');
   };
 
   const handleTimeSelect = (time: string) => {
     setSelectedTime(time);
-    setShowForm(true);
+    setCurrentStep('form');
   };
 
-  // NEW: Sync with Google Calendar
-  const syncWithGoogleCalendar = async (booking: Booking) => {
-    try {
-      const response = await fetch(API_ENDPOINTS.BOOKING, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ booking }),
-      });
-
-      const data = await response.json();
+  const handleFormSubmit = async (formData: any) => {
+    if (selectedDate && selectedTime) {
+      // FIX: Use local date formatting instead of ISO string
+      const year = selectedDate.getFullYear();
+      const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+      const day = String(selectedDate.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
       
-      if (data.success) {
-        console.log('✅ Successfully synced with Google Calendar');
-        console.log('📅 Event Link:', data.eventLink);
-        
-        // Optional: You can store the eventId for future updates/deletions
-        // booking.googleEventId = data.eventId;
-      } else {
-        console.error('Failed to sync:', data.error);
-        // Still save locally even if sync fails
-        // You might want to add a retry mechanism here
+      const newBooking: Booking = {
+        id: `booking-${Date.now()}`,
+        date: dateStr,  // Now uses local date format YYYY-MM-DD
+        time: selectedTime,
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        service: formData.service,
+        notes: formData.notes,
+        status: 'pending'
+      };
+
+      // Save locally first
+      const updatedBookings = [...bookings, newBooking];
+      setBookings(updatedBookings);
+      localStorage.setItem('bookings', JSON.stringify(updatedBookings));
+
+      try {
+        // Sync with Google Calendar
+        const response = await fetch('/api/booking', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ booking: newBooking }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Update booking status to confirmed
+          const confirmedBooking = { ...newBooking, status: 'confirmed' as const };
+          const confirmedBookings = updatedBookings.map(b => 
+            b.id === newBooking.id ? confirmedBooking : b
+          );
+          setBookings(confirmedBookings);
+          localStorage.setItem('bookings', JSON.stringify(confirmedBookings));
+          
+          setConfirmedBooking(confirmedBooking);
+          setCurrentStep('confirmation');
+        } else {
+          throw new Error(result.error || 'Failed to sync with calendar');
+        }
+      } catch (error) {
+        console.error('Error syncing with calendar:', error);
+        // Still show confirmation but with a warning
+        setConfirmedBooking(newBooking);
+        setCurrentStep('confirmation');
+        alert('Booking saved locally but calendar sync failed. We\'ll sync it manually.');
       }
-    } catch (error) {
-      console.error('Error syncing with calendar:', error);
-      // Still proceed with local booking even if sync fails
-      // This ensures the booking is saved even if the API is down
     }
   };
 
-  const handleBookingSubmit = async (formData: any) => {
-    if (!selectedDate || !selectedTime) return;
-
-    const newBooking: Booking = {
-      id: `booking_${Date.now()}`,
-      date: selectedDate.toISOString().split('T')[0],
-      time: selectedTime,
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      service: formData.service,
-      notes: formData.notes,
-      status: 'confirmed',
-      createdAt: new Date().toISOString()
-    };
-
-    const updatedBookings = [...bookings, newBooking];
-    await saveBookings(updatedBookings);
-    
-    setCurrentBooking(newBooking);
-    setShowForm(false);
-    setShowConfirmation(true);
-    
-    // Sync with Google Calendar (async - doesn't block UI)
-    await syncWithGoogleCalendar(newBooking);
+  const handleFormCancel = () => {
+    setCurrentStep('time');
   };
 
   const handleConfirmationClose = () => {
-    setShowConfirmation(false);
     setSelectedDate(null);
     setSelectedTime('');
-    setCurrentBooking(null);
+    setCurrentStep('date');
+    setConfirmedBooking(null);
   };
 
-  const getBookingsForDate = (date: Date): Booking[] => {
-    const dateStr = date.toISOString().split('T')[0];
-    return bookings.filter(b => b.date === dateStr && b.status !== 'cancelled');
+  // Get bookings for selected date
+  const getDateBookings = () => {
+    if (!selectedDate) return [];
+    
+    // FIX: Use local date formatting for comparison
+    const year = selectedDate.getFullYear();
+    const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+    const day = String(selectedDate.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+    
+    return bookings.filter(b => b.date === dateStr);
   };
 
   return (
     <section id="booking" className="booking-calendar">
       <div className="booking-container">
         <div className="booking-header">
-          <p className="booking-tagline">Schedule an Appointment</p>
+          <p className="booking-tagline">Schedule Appointment</p>
           <h2 className="booking-title">Book Your Consultation</h2>
           <p className="booking-subtitle">
-            Select a date and time that works best for you. 
-            All appointments are automatically synced with our calendar.
+            Select your preferred date and time for a professional consultation.
+            Each session is 60 minutes.
           </p>
         </div>
 
@@ -167,56 +162,62 @@ const BookingCalendar: React.FC = () => {
           </div>
 
           <div className="selection-section">
-            {selectedDate && !showForm && (
+            {currentStep === 'date' && (
+              <div className="selection-placeholder">
+                <span className="placeholder-icon">📅</span>
+                <h3>Select a Date</h3>
+                <p>Choose your preferred date from the calendar to view available time slots.</p>
+              </div>
+            )}
+
+            {currentStep === 'time' && selectedDate && (
               <TimeSlotPicker
                 selectedDate={selectedDate}
                 selectedTime={selectedTime}
                 onTimeSelect={handleTimeSelect}
-                bookings={getBookingsForDate(selectedDate)}
+                bookings={getDateBookings()}
               />
             )}
 
-            {showForm && selectedDate && selectedTime && (
+            {currentStep === 'form' && selectedDate && selectedTime && (
               <BookingForm
                 selectedDate={selectedDate}
                 selectedTime={selectedTime}
-                onSubmit={handleBookingSubmit}
-                onCancel={() => setShowForm(false)}
+                onSubmit={handleFormSubmit}
+                onCancel={handleFormCancel}
               />
             )}
 
-            {!selectedDate && (
-              <div className="selection-placeholder">
-                <div className="placeholder-icon">📅</div>
-                <h3>Select a Date</h3>
-                <p>Choose a date from the calendar to view available time slots</p>
-              </div>
+            {currentStep === 'confirmation' && confirmedBooking && (
+              <BookingConfirmation
+                booking={confirmedBooking}
+                onClose={handleConfirmationClose}
+              />
             )}
           </div>
         </div>
 
-        {showConfirmation && currentBooking && (
-          <BookingConfirmation
-            booking={currentBooking}
-            onClose={handleConfirmationClose}
-          />
-        )}
-
         <div className="booking-features">
           <div className="feature">
             <span className="feature-icon">✅</span>
-            <h4>Instant Confirmation</h4>
-            <p>Receive immediate booking confirmation via email</p>
+            <div>
+              <h4>Instant Confirmation</h4>
+              <p>Receive immediate confirmation and calendar invitation</p>
+            </div>
           </div>
           <div className="feature">
-            <span className="feature-icon">📱</span>
-            <h4>Calendar Sync</h4>
-            <p>Automatically syncs with Google Calendar</p>
+            <span className="feature-icon">🔄</span>
+            <div>
+              <h4>Automatic Sync</h4>
+              <p>Appointments sync directly with our calendar system</p>
+            </div>
           </div>
           <div className="feature">
-            <span className="feature-icon">🔔</span>
-            <h4>Reminders</h4>
-            <p>Get email reminders before your appointment</p>
+            <span className="feature-icon">📧</span>
+            <div>
+              <h4>Email Reminders</h4>
+              <p>Get reminded 24 hours before your appointment</p>
+            </div>
           </div>
         </div>
       </div>
