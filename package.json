@@ -2,22 +2,5 @@
   "name": "accounting-website",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "googleapis": "^128.0.0",
-    "@vercel/node": "^3.0.0"
-  },
-  "devDependencies": {
-    "@types/node": "^20.0.0",
-    "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.0",
-    "typescript": "^5.0.0"
-  },
-  "scripts": {
-    "dev": "echo 'Use Bolt.new dev server'",
-    "build": "echo 'No build needed for Bolt.new project'",
-    "start": "echo 'Deployed via Vercel'"
-  }
+  "type": "module"
 }
