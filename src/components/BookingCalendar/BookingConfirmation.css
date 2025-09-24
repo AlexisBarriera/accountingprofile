@@ -1,0 +1,212 @@
+
+.confirmation-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 2rem;
+  animation: fadeIn 0.3s ease;
+}
+
+.confirmation-modal {
+  background: white;
+  border-radius: 20px;
+  padding: 3rem;
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.confirmation-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.success-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  animation: bounce 0.6s ease;
+}
+
+.confirmation-header h2 {
+  font-size: 2rem;
+  color: #2c1810;
+  margin-bottom: 0.5rem;
+}
+
+.confirmation-header p {
+  color: #6b5648;
+  font-size: 1rem;
+}
+
+.confirmation-details {
+  background: linear-gradient(135deg, rgba(212, 165, 116, 0.1), rgba(212, 165, 116, 0.05));
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(114, 47, 55, 0.1);
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-size: 0.875rem;
+  color: #6b5648;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-value {
+  font-size: 1rem;
+  color: #2c1810;
+  font-weight: 600;
+}
+
+.confirmation-notifications {
+  margin-bottom: 2rem;
+}
+
+.confirmation-notifications h3 {
+  font-size: 1.25rem;
+  color: #2c1810;
+  margin-bottom: 1rem;
+}
+
+.confirmation-notifications ul {
+  list-style: none;
+  padding: 0;
+}
+
+.confirmation-notifications li {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: #faf8f5;
+  border-radius: 8px;
+  align-items: flex-start;
+}
+
+.confirmation-notifications .check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg, #722f37, #8b4049);
+  color: white;
+  border-radius: 50%;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.confirmation-notifications strong {
+  display: block;
+  color: #2c1810;
+  margin-bottom: 0.25rem;
+}
+
+.confirmation-notifications p {
+  margin: 0;
+  color: #6b5648;
+  font-size: 0.875rem;
+}
+
+.confirmation-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.btn-add-calendar,
+.btn-done {
+  flex: 1;
+  padding: 1rem;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Lato', sans-serif;
+  border: none;
+}
+
+.btn-add-calendar {
+  background: transparent;
+  color: #722f37;
+  border: 2px solid #722f37;
+}
+
+.btn-add-calendar:hover {
+  background: rgba(114, 47, 55, 0.05);
+}
+
+.btn-done {
+  background: linear-gradient(135deg, #722f37, #8b4049);
+  color: white;
+  box-shadow: 0 4px 20px rgba(114, 47, 55, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.btn-done:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 30px rgba(114, 47, 55, 0.4);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+@media (max-width: 640px) {
+  .confirmation-modal {
+    padding: 2rem;
+  }
+  
+  .confirmation-actions {
+    flex-direction: column;
+  }
+}

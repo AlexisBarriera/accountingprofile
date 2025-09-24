@@ -1,0 +1,39 @@
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Playfair Display', 'Libre Baskerville', Georgia, serif;
+  color: #2c1810;
+  background: linear-gradient(to bottom, #faf8f5, #f5f0ea);
+  line-height: 1.6;
+}
+
+.app {
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Typography System */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #2c1810;
+}
+
+p, span, a {
+  font-family: 'Lato', 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.7;
+  color: #4a3428;
+}
+
+/* Google Fonts Import */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Libre+Baskerville:wght@400;700&family=Lato:wght@300;400;700&display=swap');

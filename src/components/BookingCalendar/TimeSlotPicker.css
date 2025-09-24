@@ -1,0 +1,132 @@
+
+.time-slot-picker {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 5px 30px rgba(114, 47, 55, 0.1);
+}
+
+.time-slot-picker h3 {
+  font-size: 1.5rem;
+  color: #2c1810;
+  margin-bottom: 0.5rem;
+}
+
+.picker-date {
+  color: #6b5648;
+  margin-bottom: 2rem;
+  font-size: 1rem;
+}
+
+.time-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.time-section h4 {
+  font-size: 0.875rem;
+  color: #722f37;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 1rem;
+  font-family: 'Lato', sans-serif;
+  font-weight: 600;
+}
+
+.time-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+}
+
+.time-slot {
+  padding: 1rem;
+  border: 2px solid rgba(114, 47, 55, 0.2);
+  border-radius: 12px;
+  background: #faf8f5;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  position: relative;
+}
+
+.time-slot:not(:disabled):hover {
+  background: linear-gradient(135deg, rgba(114, 47, 55, 0.1), rgba(212, 165, 116, 0.1));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(114, 47, 55, 0.15);
+}
+
+.time-slot.selected {
+  background: linear-gradient(135deg, #722f37, #8b4049);
+  border-color: #722f37;
+}
+
+.time-slot.selected .slot-time {
+  color: white;
+}
+
+.time-slot.booked,
+.time-slot.past {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f0f0f0;
+}
+
+.slot-time {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2c1810;
+}
+
+.slot-status {
+  font-size: 0.75rem;
+  color: #722f37;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.time-slot.selected .slot-status {
+  color: #d4a574;
+}
+
+.slot-info {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(212, 165, 116, 0.1), rgba(212, 165, 116, 0.05));
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.slot-info p {
+  margin: 0;
+  color: #6b5648;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.info-icon {
+  font-size: 1.25rem;
+}
+
+@media (max-width: 640px) {
+  .time-slot-picker {
+    padding: 1.5rem;
+  }
+  
+  .time-grid {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 0.75rem;
+  }
+  
+  .time-slot {
+    padding: 0.75rem;
+  }
+}
