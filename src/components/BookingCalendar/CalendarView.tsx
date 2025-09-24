@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Booking } from './BookingCalendar';
 import './CalendarView.css';
@@ -36,12 +35,22 @@ const CalendarView: React.FC<CalendarViewProps> = ({ selectedDate, onDateSelect,
   };
 
   const hasBookings = (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0];
+    // FIX: Use local date formatting
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+    
     return bookings.some(b => b.date === dateStr && b.status !== 'cancelled');
   };
 
   const isFullyBooked = (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0];
+    // FIX: Use local date formatting
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+    
     const dayBookings = bookings.filter(b => b.date === dateStr && b.status !== 'cancelled');
     return dayBookings.length >= 8; // Assuming 8 time slots per day
   };
