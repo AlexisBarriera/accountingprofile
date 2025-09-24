@@ -1,6 +1,8 @@
 const { google } = require('googleapis');
 
-module.exports = async function handler(req, res) {
+export {}; // Makes this a module
+
+module.exports = async function handler(req: any, res: any) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
@@ -138,24 +140,24 @@ module.exports = async function handler(req, res) {
       }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Calendar sync error:', error);
     
     // Specific error messages
-    if (error.code === 403) {
+    if (error?.code === 403) {
       return res.status(500).json({ 
         error: 'Calendar access denied. Please ensure the calendar is shared with the service account.' 
       });
     }
     
-    if (error.code === 404) {
+    if (error?.code === 404) {
       return res.status(500).json({ 
         error: 'Calendar not found. Please check the calendar ID.' 
       });
     }
     
     return res.status(500).json({ 
-      error: `Failed to sync with calendar: ${error.message || 'Unknown error'}` 
+      error: `Failed to sync with calendar: ${error?.message || 'Unknown error'}` 
     });
   }
 };
