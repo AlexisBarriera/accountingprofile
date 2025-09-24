@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Booking } from './BookingCalendar';
 import './TimeSlotPicker.css';
@@ -66,15 +65,21 @@ const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
     );
   };
 
+  // FIX: Format the date display properly without timezone issues
+  const formatDateDisplay = () => {
+    return selectedDate.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      month: 'long', 
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
   return (
     <div className="time-slot-picker">
       <h3>Select Time</h3>
       <p className="picker-date">
-        {selectedDate.toLocaleDateString('en-US', { 
-          weekday: 'long', 
-          month: 'long', 
-          day: 'numeric' 
-        })}
+        {formatDateDisplay()}
       </p>
 
       <div className="time-sections">
