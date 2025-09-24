@@ -1,9 +1,6 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+const { google } = require('googleapis');
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
-) {
+module.exports = async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
@@ -14,44 +11,49 @@ export default async function handler(
   }
 
   if (req.method !== 'POST') {
-    return res.status(405).send('Method not allowed');
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    // Step 1: Check environment variables
+    // Check environment variables
     if (!process.env.GOOGLE_CALENDAR_ID) {
       console.error('Missing GOOGLE_CALENDAR_ID');
-      return res.status(500).send('A server error occurred: Missing calendar configuration');
+      return res.status(500).json({ 
+        error: 'Server configuration error: Missing calendar ID' 
+      });
     }
 
     if (!process.env.GOOGLE_CREDENTIALS) {
       console.error('Missing GOOGLE_CREDENTIALS');
-      return res.status(500).send('A server error occurred: Missing authentication configuration');
+      return res.status(500).json({ 
+        error: 'Server configuration error: Missing credentials' 
+      });
     }
 
-    // Step 2: Parse credentials
+    // Parse credentials
     let credentials;
     try {
       credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+      console.log('Service account:', credentials.client_email);
     } catch (e) {
-      console.error('Failed to parse GOOGLE_CREDENTIALS:', e);
-      return res.status(500).send('A server error occurred: Invalid credentials format');
+      console.error('Failed to parse credentials');
+      return res.status(500).json({ 
+        error: 'Server configuration error: Invalid credentials format' 
+      });
     }
 
-    // Step 3: Import googleapis (dynamic import for Vercel)
-    const { google } = await import('googleapis');
-
-    // Step 4: Initialize auth
+    // Initialize Google auth
     const auth = new google.auth.GoogleAuth({
-      credentials,
+      credentials: credentials,
       scopes: ['https://www.googleapis.com/auth/calendar'],
     });
 
-    const calendar = google.calendar({ version: 'v3', auth });
+    const calendar = google.calendar({ version: 'v3', auth: auth });
 
-    // Step 5: Process booking
+    // Get booking data
     const { booking } = req.body;
-    
+    console.log('Processing booking for:', booking.name);
+
     // Parse date and time
     const [year, month, day] = booking.date.split('-');
     const [time, period] = booking.time.split(' ');
@@ -61,6 +63,7 @@ export default async function handler(
     if (period === 'PM' && hour24 !== 12) hour24 += 12;
     if (period === 'AM' && hour24 === 12) hour24 = 0;
 
+    // Create start and end times
     const startDateTime = new Date(
       parseInt(year),
       parseInt(month) - 1,
@@ -72,10 +75,17 @@ export default async function handler(
     const endDateTime = new Date(startDateTime);
     endDateTime.setHours(endDateTime.getHours() + 1);
 
-    // Step 6: Create calendar event
+    // Create calendar event
     const event = {
       summary: `${booking.service} - ${booking.name}`,
-      description: `Client: ${booking.name}\nEmail: ${booking.email}\nPhone: ${booking.phone}\nService: ${booking.service}`,
+      description: [
+        `Client: ${booking.name}`,
+        `Email: ${booking.email}`,
+        `Phone: ${booking.phone}`,
+        `Service: ${booking.service}`,
+        `Notes: ${booking.notes || 'No additional notes'}`,
+        `Booking ID: ${booking.id}`
+      ].join('\n'),
       start: {
         dateTime: startDateTime.toISOString(),
         timeZone: 'America/Puerto_Rico',
@@ -84,32 +94,50 @@ export default async function handler(
         dateTime: endDateTime.toISOString(),
         timeZone: 'America/Puerto_Rico',
       },
+      reminders: {
+        useDefault: false,
+        overrides: [
+          { method: 'email', minutes: 24 * 60 },
+          { method: 'popup', minutes: 60 },
+        ],
+      },
     };
 
-    console.log('Creating event for calendar:', process.env.GOOGLE_CALENDAR_ID);
-    
+    console.log('Creating event on calendar:', process.env.GOOGLE_CALENDAR_ID);
+
+    // Insert event to calendar
     const response = await calendar.events.insert({
       calendarId: process.env.GOOGLE_CALENDAR_ID,
       requestBody: event,
     });
 
+    console.log('Event created successfully:', response.data.id);
+
     return res.status(200).json({ 
       success: true, 
       eventId: response.data.id,
-      eventLink: response.data.htmlLink 
+      eventLink: response.data.htmlLink,
+      message: 'Booking confirmed and added to calendar!'
     });
 
-  } catch (error: any) {
-    console.error('Calendar API error:', error);
+  } catch (error) {
+    console.error('Calendar sync error:', error);
     
-    // Check for specific Google API errors
+    // Specific error messages
     if (error.code === 403) {
-      return res.status(500).send('A server error occurred: Calendar access denied. Please share calendar with service account.');
-    }
-    if (error.code === 404) {
-      return res.status(500).send('A server error occurred: Calendar not found');
+      return res.status(500).json({ 
+        error: 'Calendar access denied. Please ensure the calendar is shared with the service account.' 
+      });
     }
     
-    return res.status(500).send(`A server error occurred: ${error.message || 'Unknown error'}`);
+    if (error.code === 404) {
+      return res.status(500).json({ 
+        error: 'Calendar not found. Please check the calendar ID.' 
+      });
+    }
+    
+    return res.status(500).json({ 
+      error: `Failed to sync with calendar: ${error.message || 'Unknown error'}` 
+    });
   }
-}
+};
