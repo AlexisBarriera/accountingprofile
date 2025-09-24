@@ -2,6 +2,7 @@
   "name": "accounting-website",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -15,8 +16,8 @@
     "typescript": "^5.0.0"
   },
   "scripts": {
-    "dev": "vercel dev",
-    "build": "tsc",
-    "start": "vercel dev"
+    "dev": "echo 'Use Bolt.new dev server'",
+    "build": "echo 'No build needed for Bolt.new project'",
+    "start": "echo 'Deployed via Vercel'"
   }
 }
