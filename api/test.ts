@@ -1,4 +1,6 @@
-module.exports = function handler(req, res) {
+export {}; // Makes this a module
+
+module.exports = function handler(req: any, res: any) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   
@@ -9,7 +11,7 @@ module.exports = function handler(req, res) {
   let serviceAccountEmail = 'NOT SET';
   let errorDetails = '';
   
-  if (hasCredentials) {
+  if (hasCredentials && process.env.GOOGLE_CREDENTIALS) {
     try {
       const creds = JSON.parse(process.env.GOOGLE_CREDENTIALS);
       credentialsValid = !!(creds.client_email && creds.private_key);
@@ -21,8 +23,8 @@ module.exports = function handler(req, res) {
       if (!creds.private_key) {
         errorDetails += 'Missing private_key. ';
       }
-    } catch (e) {
-      errorDetails = 'Failed to parse credentials JSON: ' + e.message;
+    } catch (e: any) {
+      errorDetails = 'Failed to parse credentials JSON: ' + (e?.message || 'Unknown error');
     }
   } else {
     errorDetails = 'GOOGLE_CREDENTIALS environment variable not set';
