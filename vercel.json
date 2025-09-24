@@ -1,9 +1,7 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "framework": "vite",
   "functions": {
-    "api/booking.ts": {
+    "api/*.ts": {
+      "runtime": "nodejs20.x",
       "maxDuration": 10
     }
   },
@@ -14,7 +12,7 @@
     },
     {
       "source": "/(.*)",
-      "destination": "/$1"
+      "destination": "/"
     }
   ]
 }
