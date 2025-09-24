@@ -53,29 +53,40 @@ module.exports = async function handler(req, res) {
     // Get booking data
     const { booking } = req.body;
     console.log('Processing booking for:', booking.name);
+    console.log('Selected date:', booking.date);
+    console.log('Selected time:', booking.time);
 
-    // Parse date and time
-    const [year, month, day] = booking.date.split('-');
-    const [time, period] = booking.time.split(' ');
-    const [hour, minute] = time.split(':');
+    // Parse date (YYYY-MM-DD format)
+    const [year, month, day] = booking.date.split('-').map(Number);
     
-    let hour24 = parseInt(hour);
-    if (period === 'PM' && hour24 !== 12) hour24 += 12;
-    if (period === 'AM' && hour24 === 12) hour24 = 0;
+    // Parse time (e.g., "1:00 PM")
+    const [time, period] = booking.time.split(' ');
+    const [hourStr, minuteStr] = time.split(':');
+    let hour = parseInt(hourStr);
+    const minute = parseInt(minuteStr) || 0;
+    
+    // Convert to 24-hour format
+    if (period === 'PM' && hour !== 12) {
+      hour += 12;
+    } else if (period === 'AM' && hour === 12) {
+      hour = 0;
+    }
 
-    // Create start and end times
-    const startDateTime = new Date(
-      parseInt(year),
-      parseInt(month) - 1,
-      parseInt(day),
-      hour24,
-      parseInt(minute) || 0
-    );
+    // Create date string in Puerto Rico timezone format
+    // Format: YYYY-MM-DDTHH:mm:ss
+    const dateTimeStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`;
+    
+    // Create start time (treat as Puerto Rico time directly)
+    const startDateTime = dateTimeStr;
+    
+    // Calculate end time (1 hour later)
+    const endHour = hour + 1;
+    const endDateTimeStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(endHour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`;
+    
+    console.log('Start datetime:', startDateTime);
+    console.log('End datetime:', endDateTimeStr);
 
-    const endDateTime = new Date(startDateTime);
-    endDateTime.setHours(endDateTime.getHours() + 1);
-
-    // Create calendar event
+    // Create calendar event with TIMEZONE-SPECIFIC times
     const event = {
       summary: `${booking.service} - ${booking.name}`,
       description: [
@@ -87,12 +98,12 @@ module.exports = async function handler(req, res) {
         `Booking ID: ${booking.id}`
       ].join('\n'),
       start: {
-        dateTime: startDateTime.toISOString(),
-        timeZone: 'America/Puerto_Rico',
+        dateTime: startDateTime,  // Send as local time
+        timeZone: 'America/Puerto_Rico',  // Specify timezone
       },
       end: {
-        dateTime: endDateTime.toISOString(),
-        timeZone: 'America/Puerto_Rico',
+        dateTime: endDateTimeStr,  // Send as local time
+        timeZone: 'America/Puerto_Rico',  // Specify timezone
       },
       reminders: {
         useDefault: false,
@@ -103,7 +114,8 @@ module.exports = async function handler(req, res) {
       },
     };
 
-    console.log('Creating event on calendar:', process.env.GOOGLE_CALENDAR_ID);
+    console.log('Creating event with timezone:', 'America/Puerto_Rico');
+    console.log('Event details:', JSON.stringify(event, null, 2));
 
     // Insert event to calendar
     const response = await calendar.events.insert({
@@ -117,7 +129,13 @@ module.exports = async function handler(req, res) {
       success: true, 
       eventId: response.data.id,
       eventLink: response.data.htmlLink,
-      message: 'Booking confirmed and added to calendar!'
+      message: 'Booking confirmed and added to calendar!',
+      debug: {
+        requestedDate: booking.date,
+        requestedTime: booking.time,
+        createdStart: startDateTime,
+        timezone: 'America/Puerto_Rico'
+      }
     });
 
   } catch (error) {
