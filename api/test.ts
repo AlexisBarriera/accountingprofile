@@ -1,6 +1,9 @@
-export {}; // Makes this a module
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-module.exports = function handler(req: any, res: any) {
+module.exports = function handler(
+  req: VercelRequest,
+  res: VercelResponse
+) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   
@@ -23,8 +26,8 @@ module.exports = function handler(req: any, res: any) {
       if (!creds.private_key) {
         errorDetails += 'Missing private_key. ';
       }
-    } catch (e: any) {
-      errorDetails = 'Failed to parse credentials JSON: ' + (e?.message || 'Unknown error');
+    } catch (e) {
+      errorDetails = 'Failed to parse credentials JSON: ' + (e instanceof Error ? e.message : 'Unknown error');
     }
   } else {
     errorDetails = 'GOOGLE_CREDENTIALS environment variable not set';
