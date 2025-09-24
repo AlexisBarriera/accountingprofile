@@ -1,6 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-
-export default function handler(req: VercelRequest, res: VercelResponse) {
+module.exports = function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   
@@ -8,30 +6,39 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
   const hasCredentials = !!process.env.GOOGLE_CREDENTIALS;
   
   let credentialsValid = false;
+  let serviceAccountEmail = 'NOT SET';
   let errorDetails = '';
   
   if (hasCredentials) {
     try {
-      const creds = JSON.parse(process.env.GOOGLE_CREDENTIALS || '{}');
+      const creds = JSON.parse(process.env.GOOGLE_CREDENTIALS);
       credentialsValid = !!(creds.client_email && creds.private_key);
-      if (!credentialsValid) {
-        errorDetails = 'Credentials missing required fields';
+      serviceAccountEmail = creds.client_email || 'MISSING';
+      
+      if (!creds.client_email) {
+        errorDetails += 'Missing client_email. ';
+      }
+      if (!creds.private_key) {
+        errorDetails += 'Missing private_key. ';
       }
     } catch (e) {
-      errorDetails = 'Failed to parse credentials JSON';
+      errorDetails = 'Failed to parse credentials JSON: ' + e.message;
     }
+  } else {
+    errorDetails = 'GOOGLE_CREDENTIALS environment variable not set';
   }
   
   res.status(200).json({
-    status: 'API endpoint working',
+    status: 'API is working!',
     environment: {
-      hasCalendarId,
-      hasCredentials,
-      credentialsValid,
+      hasCalendarId: hasCalendarId,
+      hasCredentials: hasCredentials,
+      credentialsValid: credentialsValid,
       calendarId: hasCalendarId ? process.env.GOOGLE_CALENDAR_ID : 'NOT SET',
-      serviceAccount: credentialsValid ? JSON.parse(process.env.GOOGLE_CREDENTIALS || '{}').client_email : 'NOT SET'
+      serviceAccount: serviceAccountEmail
     },
-    errorDetails,
-    timestamp: new Date().toISOString()
+    errorDetails: errorDetails || 'All checks passed!',
+    timestamp: new Date().toISOString(),
+    nodeVersion: process.version
   });
-}
+};
