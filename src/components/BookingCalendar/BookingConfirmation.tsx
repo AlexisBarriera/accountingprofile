@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Booking } from './BookingCalendar';
 import './BookingConfirmation.css';
@@ -10,7 +9,10 @@ interface BookingConfirmationProps {
 
 const BookingConfirmation: React.FC<BookingConfirmationProps> = ({ booking, onClose }) => {
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
+    // FIX: Parse date components manually to avoid timezone issues
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(year, month - 1, day); // month is 0-indexed
+    
     return date.toLocaleDateString('en-US', { 
       weekday: 'long', 
       year: 'numeric', 
